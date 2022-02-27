@@ -13,16 +13,17 @@ namespace fileFinder
     private:
         // Attributes
         std::vector<std::string> m_needles;
-        std::string m_path = "";
-        std::string m_errorString = "";
-        bool m_isValid = false;
-        const std::string STR_SAMPLE_USAGE = "Sample usage: file-finder.exe path <substring1> [<substring2> [<substring3>] ...]";
-        const std::string STR_PLEASE_SPECIFY = "Please specify both a path and at least one substring to search for.";
+        std::string m_path {""};
+        std::string m_errorString {""};
+        bool m_isValid {false};
+        const std::string STR_SAMPLE_USAGE {"Sample usage: file-finder.exe path <substring1> [<substring2> [<substring3>] ...]"};
+        const std::string STR_PLEASE_SPECIFY {"Please specify both a path and at least one substring to search for."};
 
         /// <summary> Handles parsing of command line arguments and sets object properties accordingly.</summary>
         void ParseCommandLine(int argc, char *argv[]);
-
     public:
+
+        CommandLineParser() = delete;
 
         CommandLineParser(int argc, char *argv[]);
 
@@ -37,8 +38,6 @@ namespace fileFinder
 
         ///<summary> If Parse has returned false, will contain error string that can be dipslayed to user</summary>
         std::string ErrorString() const;
-
-        ~CommandLineParser();
     };
 }
 

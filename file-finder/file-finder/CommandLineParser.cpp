@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <iostream>
+#include <conio.h>
 
 using namespace std;
 using namespace filesystem;
@@ -65,9 +67,4 @@ std::vector<std::string> CommandLineParser::Needles() const
 std::string CommandLineParser::ErrorString()  const
 {
     return m_errorString;
-}
-
-CommandLineParser::~CommandLineParser()
-{
-
 }

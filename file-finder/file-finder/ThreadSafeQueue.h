@@ -24,9 +24,7 @@ namespace fileFinder
         T Dequeue();
 
         /// <summary> Returns the number of items in the queue</summary>
-        int size();
-
-        virtual ~ThreadSafeQueue();
+        int Size();
     };
 
     typedef class ThreadSafeQueue<std::string> TSQString;

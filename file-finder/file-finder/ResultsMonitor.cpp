@@ -36,50 +36,70 @@ void ResultsMonitor::InitializeHaystacks(const std::string &path, const std::vec
 
 ResultsMonitor::ResultsMonitor(const std::string &path, const std::vector<std::string> &needles)
 {
-    m_resultsContainer = std::make_unique<ThreadSafeQueue<std::string>>();
     InitializeHaystacks(path, needles);
 }
+
+void ResultsMonitor::GetKeyboardInput()
+{
+    bool timeoutExpired = false;
+    system_clock::time_point start = system_clock::now();
+    duration<double> timeout = std::chrono::seconds(5);
+
+    while (!timeoutExpired && !m_lastKbEntry)
+    {
+        // Check our duration to see if we've timed out waiting on input.
+        duration<double> elapsed = system_clock::now() - start;
+        if (elapsed >= timeout)
+        {
+            timeoutExpired = true;
+        }
+
+        // Check to see if the keyboard was interacted with and if so assign it to our member variable
+        if (_kbhit())
+        {
+            m_lastKbEntry.exchange(_getch());
+        }
+        
+        // Debug output :-)
+        //cout << " kb: " << m_lastKbEntry << " done: " << m_completeThreads << " of: " << m_haystacks.size() << " elapsed: " << elapsed.count() << " of " << timeout.count() << endl;
+    }
+}
+
 
 void ResultsMonitor::MonitorSearch()
 {
     while (m_completeThreads < m_haystacks.size())
     {
-        // Request user input using std::async
-        system_clock::time_point fiveSecondTimeout = system_clock::now() + std::chrono::seconds(5);
-        future<char> asyncUserInput = async(launch::async, 
-            [this]() 
-            {
-                char userInput;
-                userInput = _getch(); 
-                return userInput;
-            }
-        );
-        future_status status = asyncUserInput.wait_until(fiveSecondTimeout);
-
-        // If we received user input, act on it, (tolower transform should probably be implemented in a utility class or method)
-        if (status == std::future_status::ready)
+        // Process user input until 5 seconds have passed or the user has interacted with the keyboard
+        auto kbThread = std::make_unique<thread>(&ResultsMonitor::GetKeyboardInput, this);
+        if (kbThread->joinable())
         {
-            char result = asyncUserInput.get();
-            
-            if (tolower(result) == 'q')
+            kbThread->join();
+        }
+
+        if (m_lastKbEntry)
+        {
+            if (tolower(m_lastKbEntry) == 'q')
             {
                 StopSearching();
             }
         }
+
+        ClearLastKeyPressed();
+
         // Once we've processed input, we can go ahead and dump whatever records are still available.
         Dump();
     }
 
-    // Make sure we've dumped whatever records are still remaining if we're done monitoring our threads
+    // Make sure we've dumped whatever records are still remaining after all of our threads have finished running
     Dump();
 }
 
 void ResultsMonitor::Dump()
 {
-    while (m_resultsContainer->size())
+    while (m_resultsContainer->Size())
     {
-        string output = m_resultsContainer->Dequeue();
-        cout << output << endl;
+        cout << m_resultsContainer->Dequeue() << endl;
     }
 }
 
@@ -111,7 +131,7 @@ void ResultsMonitor::SearchFilesystem()
                 thread->join();
             }
         }
-    
+
         if (monitorThread->joinable())
         {
             monitorThread->join();
@@ -124,7 +144,7 @@ void ResultsMonitor::SearchFilesystem()
     }
 }
 
-ResultsMonitor::~ResultsMonitor()
+void fileFinder::ResultsMonitor::ClearLastKeyPressed()
 {
-    
+    m_lastKbEntry.exchange(0);
 }

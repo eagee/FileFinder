@@ -15,18 +15,20 @@ namespace fileFinder
     {
     public:
         /// <summary>Callback definition indicates a matching file name that was found, and provides reference that allows search to be terminated</summary>
-        typedef std::function<void(const std::string & match, std::atomic<bool> &terminate)> ResultCallback;
-        typedef std::function<void(const std::thread::id id)> FinishedCallback;
+        typedef std::function<void(const std::string &match, std::atomic<bool> &terminate)> ResultCallback;
+        typedef std::function<void(const std::thread::id &id)> FinishedCallback;
     
     private:
-        std::string m_path;
-        std::string m_needle;
-        std::atomic<bool> m_terminate = false;
+        std::string m_path {""};
+        std::string m_needle {""};
+        std::atomic<bool> m_terminate {false};
         ResultCallback m_resultsCallback;
         FinishedCallback m_finishedCallback;
     
     public:
     
+        FilesystemHaystack() = delete;
+
         FilesystemHaystack(const std::string &path, const std::string &needle, ResultCallback resultscallback = nullptr, FinishedCallback finishedCallback = nullptr);
     
         /// <summary> Iterate through all files and subdirectories specified by path to find needle specified, if  results
@@ -34,8 +36,6 @@ namespace fileFinder
         /// once it's called.
         /// </summary> 
         void FindNeedles();
-    
-        ~FilesystemHaystack();
     };
 }
 

@@ -51,15 +51,9 @@ void FilesystemHaystack::FindNeedles()
         {
             // Since our project has a simplifying assumption that we have access to all files and directories, we'll go ahead and end the loop if we run into an access error.
             std::cout << ">>> Error: " << err.what() << " when searching path " << path << std::endl;
-            // TODO: Handle access denied errors by skipping files and folders that trigger that exception and continue the search.
             break;
         }
         
     }
     m_finishedCallback(std::this_thread::get_id());
-}
-
-FilesystemHaystack::~FilesystemHaystack()
-{
-
 }
