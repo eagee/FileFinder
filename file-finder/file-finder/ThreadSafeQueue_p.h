@@ -24,7 +24,7 @@ namespace fileFinder {
     }
 
     template <class T>
-    int ThreadSafeQueue<T>::Size()
+    size_t ThreadSafeQueue<T>::Size()
     {
         std::unique_lock<std::mutex> lock(m_mutex);
         return m_queue.size();

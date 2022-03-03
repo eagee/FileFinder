@@ -99,6 +99,7 @@ void ResultsMonitor::Dump()
 {
     while (m_resultsContainer->Size())
     {
+        m_totalMatches++;
         cout << m_resultsContainer->Dequeue() << endl;
     }
 }
@@ -147,4 +148,9 @@ void ResultsMonitor::SearchFilesystem()
 void fileFinder::ResultsMonitor::ClearLastKeyPressed()
 {
     m_lastKbEntry.exchange(0);
+}
+
+const int64_t fileFinder::ResultsMonitor::TotalMatches()
+{
+    return m_totalMatches;
 }

@@ -9,6 +9,8 @@ namespace fileFinder
 {
     class FilesystemHaystack;
 
+    /// ResultsMonitor monitors filesystem-search for each, "needle" requested by the consumer as well as keyboard input while the searches complete.
+    /// Note: This object will dump search results to the console every 5 seconds or when user input is received, ending search when 'q' is pressed.
     class ResultsMonitor
     {
     
@@ -19,31 +21,34 @@ namespace fileFinder
         std::vector<std::unique_ptr<FilesystemHaystack>> m_haystacks;
         std::vector<std::unique_ptr<std::thread>> m_threads;
         std::unique_ptr<ThreadSafeQueue<std::string>> m_resultsContainer {std::make_unique<ThreadSafeQueue<std::string>>()};
+        std::atomic<int> m_totalMatches {0};
 
-        ///<summary>Initializes haystacks and threads to execute searches on them based on the number of needles specified so that they are ready to be joined. 
-        ///         Only needs to be called if default ctor is used.</summary>
+        /// Initializes haystacks and threads used to searrch them based on the number of needles specified, so that haytacks are ready to be searched on multiple threads
         void InitializeHaystacks(const std::string &path, const std::vector<std::string> &needles);
 
-        /// <summary> Function to be run as a thread that will monitor the search result container, process keyboard input, and print results to the console </summary>
+        ///  Function to be run as a thread that will monitor the search result container, process keyboard input, and print results to the console
         void MonitorSearch();
 
-        /// <summary> Convenience function that will clear out the last key pressed </summary>
+        ///  Convenience function that will clear out the last key pressed 
         void ClearLastKeyPressed();
 
-        /// <summary> Dumps search results to the console </summary>
+        ///  Dumps search results to the console 
         void Dump();
 
-        /// <summary> Triggers all threads to stop searching the filesystem and exit </summary>
+        ///  Triggers all threads to stop searching the filesystem and exit 
         void StopSearching();
 
-        /// <summary> Processes keyboard input asynchronously in another thread and sets m_lastKbEntry to a non-null value if a key is hit</summary>
+        ///  Processes keyboard input asynchronously in another thread and sets m_lastKbEntry to a non-null value if a key is hit
         void GetKeyboardInput();
 
     public:
 
         ResultsMonitor(const std::string &path, const std::vector<std::string> &needles);
 
-        ///<summary>Will search the filesystem for all of the needles specified in the constructor.</summary>
+        /// Will search the filesystem for all of the needles specified in the constructor.
         void SearchFilesystem();
+
+        /// Will indicate the total number of matching files found during the search.
+        const int64_t TotalMatches();
     };
 }

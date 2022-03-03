@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <cassert>
 
 using namespace std;
 using namespace filesystem;
@@ -11,12 +12,12 @@ using namespace fileFinder;
 FilesystemHaystack::FilesystemHaystack(const std::string &path, const std::string &needle, ResultCallback resultsCallback /*= nullptr*/, FinishedCallback finishedCallback /*= nullptr*/) :
     m_path(path), m_needle(needle), m_resultsCallback(resultsCallback), m_finishedCallback(finishedCallback)
 {
-
+    assert(m_resultsCallback != nullptr);
+    assert(m_finishedCallback != nullptr);
 }
 
 void FilesystemHaystack::FindNeedles()
 {
-
     auto it = recursive_directory_iterator(m_path);
     while(it != recursive_directory_iterator())
     {

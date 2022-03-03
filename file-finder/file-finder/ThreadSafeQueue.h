@@ -5,7 +5,7 @@
 
 namespace fileFinder
 {
-    /// <summary> Template class capable of performing queuing operations safely in a threaded environment </summary>
+    /// Template class capable of performing queue operations safely in a threaded environment 
     template <typename T>
     class ThreadSafeQueue
     {
@@ -17,14 +17,14 @@ namespace fileFinder
     public:
         ThreadSafeQueue() = default;
 
-        /// <summary> Enqueue an element of type T, will unblock Dequeue operation if blocked waiting on an item. </summary>
+        ///  Enqueue an element of type T, will unblock Dequeue operation if blocked waiting on an item. 
         void Enqueue(T t);
 
-        /// <summary> Dequeue an element of type T, but sleep the thread if no elements exist in the queue yet until Enqueue is called. </summary>
+        ///  Dequeue an element of type T, but sleep the thread if no elements exist in the queue yet until Enqueue is called. 
         T Dequeue();
 
-        /// <summary> Returns the number of items in the queue</summary>
-        int Size();
+        ///  Returns the number of items in the queue
+        size_t Size();
     };
 
     typedef class ThreadSafeQueue<std::string> TSQString;

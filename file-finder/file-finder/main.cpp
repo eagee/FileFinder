@@ -38,6 +38,6 @@ int main(int argc, char *argv[])
     parser.reset(nullptr);
     searchResultsMonitor.reset(nullptr);
 
-    cout << " It's all over now :( ";
+    //cout << " It's all over now :( ";
 }
 

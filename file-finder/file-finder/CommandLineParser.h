@@ -5,13 +5,17 @@
 
 namespace fileFinder
 {
-    /// <summary> CommandLineParser is a crude utility class for parsing the command line options and verifying that they are valid.
-    /// <para>The object accepts command line arguments. <see cref="System::Console::WriteLine"/> for information about output statements.</para>
-    /// </summary>
+    /// Provides utility class for parsing, validating, and obtaining command line arguments passed by the user at runtime.
+    /// sample usage: 
+    /// CommandLineParser> parser(argc, argv);
+    /// if (!parser.IsValid())
+    /// {
+    ///     std::cout << parser->ErrorString() << endl;
+    ///     return -1;
+    /// }
     class CommandLineParser
     {
     private:
-        // Attributes
         std::vector<std::string> m_needles;
         std::string m_path {""};
         std::string m_errorString {""};
@@ -19,7 +23,7 @@ namespace fileFinder
         const std::string STR_SAMPLE_USAGE {"Sample usage: file-finder.exe path <substring1> [<substring2> [<substring3>] ...]"};
         const std::string STR_PLEASE_SPECIFY {"Please specify both a path and at least one substring to search for."};
 
-        /// <summary> Handles parsing of command line arguments and sets object properties accordingly.</summary>
+        ///  Handles parsing of command line arguments and sets object properties accordingly.
         void ParseCommandLine(int argc, char *argv[]);
     public:
 
@@ -27,16 +31,16 @@ namespace fileFinder
 
         CommandLineParser(int argc, char *argv[]);
 
-        ///<summary> Returns true if command line was successfully parsed, otherwise false </summary>
+        /// Returns true if command line was successfully parsed, otherwise false 
         bool IsValid()  const;
 
-        ///<summary> If command line parsed successfully returns the path parameter, otherwise returns an empty string</summary>
+        /// If command line parsed successfully returns the path parameter, otherwise returns an empty string
         std::string Path() const;
 
-        ///<summary>Returns the number of substrings specified on the command line that we will use to find the, "needles" in our haystacks </summary>
+        /// Returns the number of substrings specified on the command line that we will use to find the, "needles" in our haystacks 
         std::vector<std::string> Needles() const;
 
-        ///<summary> If Parse has returned false, will contain error string that can be dipslayed to user</summary>
+        /// If Parse has returned false, will contain error string that can be dipslayed to user
         std::string ErrorString() const;
     };
 }

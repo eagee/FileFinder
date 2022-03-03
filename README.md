@@ -1,34 +1,42 @@
 # The File-Finder Project
-File-finder is a utility application meant allow command line users to specify partial strings that can then be located and returned to the user in a useful format for other command line operations.
+The below document covers the file-finder project, including platform, usage, high level design decisions, test cases, and a list changes that would make the project better.
+
+## Table of Contents
+1. [Intention](#Intention)</br>
+2. [Audience](#Audience)</br>
+3. [About the project](#About-the-project)</br>
+4. [Use case diagram and requirements](#Use-case-diagram-and-requirements)</br>
+5. [Technical Use Cases](#Technical-Use-Cases)</br>
+6. [Domain Analysis](#Domain-Analysis)</br>
+7. [Tests I would have written](#Tests-I-would-have-written)</br>
+8. [Things I would like to do if I had more time](#Things-I-would-like-to-do-if-I-had-more-time)
+9. [Methodology](#Methodology)</br>
 
 ## Intention
-This document is designed to communicate about the design decisions that have been made in the creation of file-finder and to provide details about the  thought exercise used to design this solution for interested engineers (E.g. The author  likes to think through chunks of a design before code is written the first time, in order to reduce refactoring time).
+The documentation below is designed to communicate about the thought exercise that lead to design decisions in the creation of file-finder, the changes that could be made to imrpove the project in the future, and to detail the methodology used.
 
 ## Audience
-This documentation is designed for a relatively technical audience familiar with the structure of use cases, use case diagrams, and class diagrams; though an effort has been made to keep this information as accessible as possible. The use case format implemented in this document is based on templates described in, "Patterns for writing effective use cases" by Alistair Cockburn.
+The documentation below is designed for a relatively technical audience familiar with the structure of use cases, use case diagrams, and class diagrams; though an effort has been made to keep this information as accessible as possible. The use case format implemented in this document is based on templates described in, "Patterns for writing effective use cases" by Alistair Cockburn.
 
-## Methodology
-### Purpose
-The methodology for this document is based upon technical use case and domain analysis design, which is ideal for small systems or teams without a product owner (it is not intended to be a long lasting comprehensive design document, but more as a thought exercise). It was selected due it's simplicity, and the power this process has to identify architectural and implementation flaws that would require time consuming refactoring. The use case diagram, use cases, and class diagrams act as the first iteration on coding the project. The document is not intended for round tripping, and as merely being added here to demonstrate process.
+## About the project
+File-finder is a utility application designed to allow command line users to search for multiple partial file name matches in a specified search path, and obtain a list of matching files from the console. The program will dump results to the console every 5 seconds, unless a user hits any key to dump the results sooner, or presses 'q' to dump their final results and quit.
 
-### Steps [Simplified]
-To better understand this document it's helpful to know what steps are involved in this methodology:
-1. Define what the software will do (requirements/features), and how it will be used (use cases) in a use case diagram.
-2. Look for missing features or use cases by linking these elements in the diagram, if there are any that don't link clearly to another, then a user case or feature should be added (relationships do not need to be 1:1)
-3. Break up these relationships into chunks or "systems", and prioritize them by the risk each system poses to the success of the project (in a project this small, there will really only be one system)
-4. For the most important system of functionality, write all the use cases about how the software will work.
-5. After the use cases have been written, perform, "Domain Analysis" where a class diagram is created based on the nouns and verbs used in the use cases that were written in step 4.
-6. Take the completed class diagram, apply SOLID principles to it (and design patterns if you wish) and write tests and code based onthat design *(Note: I skipped the tests based on the requirements for the project, but I do list them below)*
-7. Apply everything that was learned from the steps so far and iterate on the design with the next system of functionality *(note this project was too small for more than one system)*
-8. Once all systems have been designed, this document gets filed away in lieu of the actual implementation.
+### Platform
+This project has been implemented for Windows using Visual Studio 2017 Professional with C++, using the ISO C++17 Standard.
+
+### Sample usage
+`Sample usage: file-finder.exe path <substring1> [<substring2> [<substring3>] ...]`
+
+### Demo
+![File filder example gif](/FileFinderExample.gif)
 
 ## Use case diagram and requirements
 Below is listed a use case diagram for the project that describes how the software will be used, and links those cases with the requirements of the software (e.g. what you'd list as it's features on a website).
 
-![Use case diagram and requriements](/UCD.png)
+![Use case diagram and requirements](/UCD.png)
 
 ### Technical Use Cases
-The use cases below are used to think through the problem instead of just jumping right into code, so that runtime behavior is thought through. This exercise acts as a first bad implementation that a more robust implementation can be based on, it is also a great document for test cases to be generated from.
+The use cases below are used to think through the problem instead of just jumping right into code, so that runtime behavior is thought through. This exercise acts as a first implementation that can lead to more a robust implementation without the need to refactor code and unit tests on the first iteration.
 
 #### CLI User Executes program with command line arguments
 
@@ -68,19 +76,56 @@ Below is a class diagram based on the nouns and verbs form the use case cases ab
 
 ![Use case diagram and requriements](/Class.png)
 
-##### Things I would have tested
-1. Test that command line arguments can be mocked and verified
-
+### Tests cases to written
+- CommandLineParser::IsValid - Test return value in the following scenarios:
+  - Ensure that only one command line argument returns false
+  -  Ensure that only two command line arguments returns false
+  - Ensure that three command line arguments with a file name instead of path returns false
+  - Ensure that three command line arguments with a directory that does not exist returns false
+- CommandLineParser::Path - Test that path passed to ctor is returned
+- CommandLineParser::Needles - Test that all needles passed in command line are returned
+- CommandLineParser::ErrorString - Test return values in the following scenarios:
+  - Ensure that only one command line argument returns sample usage
+  - Ensure that only two command line arguments returns sample usage
+  - Ensure that three command line arguments with a file name instead of path returns error indicating this
+  - Ensure that three command line arguments with a directory that does not exist returns error indicating this
+- ThreadSafeQueue::Enqueue/ThreadSafeQueue::Dequeue/ThreadSafeQueue::Size - Test that in a multi-threaded scenario deadlocks are avoided and multiple items are successfully added and removed.
+- FilesystemHaystack::FindNeedles - Use mocked object to a generic file system wrapper based on an interface to send mock test data at runtime to FindNeedlesMethod and test:
+  - Test that matching callback is triggered 1..n times for matching patterns
+  - Test that matching callback is triggered 0 times if no matching pattern is found
+  - Test that exit flag in callback triggers cessation of search operation
+  - Test that finished callback is triggered in all scenarios
+- ResultsMonitor::SearchFilesystem - This is another scenario where my overall structure would have needed to include a generic file system wrapper based on an interface to provide mock filesystem data at runtime to child objects, as well as a generic input wrapper based on an interface that could provide mock keyboard input at runtime. Standard output could also be redirected for this test.
+  - Test to ensure that when SearchFilesystem was called with no matches that TotalMatches returns 0
+  - Test to ensure that when SearchFilesystem was called with 1..n matches that TotalMatches returns the correct number
+  - Test to ensure that when SearchFilesystem was called that appropriate data is output ~every 5 seconds
+  - Test to ensure that when SearchFilesystem was called that appropriate data is output sooner than 5 seconds if keyboard input is received
+  - Test to ensure that when SearchFilesystem was called that the method terminates when appropriate keyboard input is received
 
 ### Things I would like to do if I had more time
-1. I may have failed on the Simplicity evaluation criteria. My idea of simplicity in user mode development means using at least a couple of basic classes to make reading and mocking easier, employing basic principles without adding excessive complexity (e.g. if there were more variability I might use the strategy pattern / always program to an interface not an implementation). I also focused on C++ 17 because the standard provides shared common language that can be understood regardless of platform.
-2. Having ResultsMonitor::MonitorSearch handle user input feels like a violation of SRP, I'd like to have a better abstraction here.
-3. I made an assumption to leave out Unicode support for this example to save on time, that would never fly in production. (I'm pretty sure a language like Japanese would cause failures).
-4. I would add translation support once I added unicode support if I felt this tool had a broad target demographic.
-5. I want to research whether there's a more efficient algorithm that would perform better in a single thread (just out of curiosity).
-6. Exception handling - I'm not really doing much here! How would I handle hardware/system errors, and what would be the most elegant way to handle thread exceptions. What about an access denied exception if I tried to enumerate the Windows folder? (I know we have an assumption that we have access in the project)
-7. Create a C implementation that behaves comparably with the C++ implementation, for fun and just to get back to my C roots :). Compare mentally the complexity of each solution and learn from it.
-8. Abstract directory iteration for mock support and unit testing that doesn't require system integration.
-9. Look into whether we would see better performance only iterating through the filesystem once instead of on each thread
-10. toLower implementation in ResultsMonitor::MonitorSearch should probably exist in a convenience method or utility class
-11. Purely for fun, I would like to see if the single threaded solution could gather a threshold of file names and run all comparisons at once on a GPU for better performance (I've done similar lookups with malware signature matching in the past and saw a 5x-6x improvement for a single threaded test - this would not be used as a viable example, just something I would do for laughs)
+1. I may have failed on the Simplicity evaluation criteria. My idea of simplicity in user mode development means using at least a couple of basic classes to make reading and mocking easier, employing basic principles without adding excessive complexity (e.g. if there were more variability I might been more diligent about SOLID, especially for mocking out interfaces/superclasses). It did occur to me that I should have just used plain old modular C to demonstrate driver-level-friendly simplicity.
+2. I made an assumption to leave out Unicode support for this example to save on time, that would never fly in production.
+3. There's a potential here to use a *lot* of threads for a large set of search patterns, these could be limited to a pool based on the number of cores on the machine.
+4. I want to research whether there's a more efficient algorithm than std::boyer_moyer that would perform better within a single thread (just out of curiosity, are we gaining the benefits we hope for with multithreading?).
+5. Exception handling - I'm not really doing much here! How would I handle hardware/system errors, and what would be the most elegant way to handle thread and access exceptions.
+6. Create a C implementation that behaves comparably with the C++ implementation, and compare.
+8. Abstract directory iteration for mock objects and unit testing that doesn't require system integration.
+9. Look into whether we would see better performance only iterating through the filesystem once instead of on each thread.
+10. Purely for fun (definitely not production), I would like to see if the single threaded solution could gather a threshold of file names and run all comparisons at once on a GPU for better performance (I've done similar lookups with malware signatures in the past - this would not be used as a viable example, just something I would do for laughs)
+11. ResultsMonitor may violate SRP, hardware input/output should be abstracted
+12. Support for translations of some kind might be beneficial for a wider target demographic.
+
+## Methodology
+### Purpose
+The methodology for this document is based upon technical use case and domain analysis design, which is ideal for small systems or teams without a product owner (it is not intended to be a long lasting comprehensive design document, but more as a one time thought exercise used to mitigate risk). It was selected due it's simplicity, and the power this process has to identify architectural and implementation flaws that would require time consuming refactoring. The use case diagram, use cases, and class diagrams act as the first iteration on coding the project. The document is not intended for round tripping, and is merely being added here to demonstrate process.
+
+### Steps
+To better understand this document it's helpful to know what steps are involved in this methodology (at least the simplified version I list here):
+1. Define what the software will do (requirements/features), and how it will be used (use cases) in a use case diagram.
+2. Look for missing features or use cases by linking these elements in the diagram, if there are any that don't link clearly to one another, then a user case or feature should be added (relationships do not need to be 1:1, but relationships need to exist)
+3. Break up these relationships into chunks or "systems", and prioritize them by the risk each system poses to the success of the project (in a project this small, there will really only be one system)
+4. For the most important system of functionality, write all the use cases about how the software will work.
+5. After the use cases have been written, perform, "Domain Analysis" where a class diagram is created based on the nouns and verbs used in the use cases that were written in step 4.
+6. Take the completed class diagram, apply SOLID principles to it (and design patterns if you wish) and write tests and code based on that design *(Note: I skipped the tests based on the requirements for the project, but I do list them above)*
+7. Apply everything that was learned from the steps so far and iterate on the design with the next system of functionality *(note this project was too small for more than one system)*
+8. Once all systems have been designed, this document gets filed away since the actual implementation will be more informative.

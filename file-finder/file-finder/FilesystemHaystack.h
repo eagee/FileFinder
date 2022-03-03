@@ -8,13 +8,12 @@
 
 namespace fileFinder
 {
-    ///<summary>Class object that allows consumers to specify a, "needle" that can be found in file names in the path specified.
-    ///<para>Runs in a separate thread, passing any matching file names back via labmda function specified.</para>
-    ///</summary>
+    /// Allows consumers to specify a, "needle" that can be found in file names in the path specified.
+    /// Note: Object is designed to pass matching, "needles" back to consumer via ResultCallback and FinishedCallback to allow for mutli-threading if desired.
     class FilesystemHaystack
     {
     public:
-        /// <summary>Callback definition indicates a matching file name that was found, and provides reference that allows search to be terminated</summary>
+        /// Callback definition indicates a matching file name that was found, and provides reference that allows search to be terminated
         typedef std::function<void(const std::string &match, std::atomic<bool> &terminate)> ResultCallback;
         typedef std::function<void(const std::thread::id &id)> FinishedCallback;
     
@@ -31,10 +30,9 @@ namespace fileFinder
 
         FilesystemHaystack(const std::string &path, const std::string &needle, ResultCallback resultscallback = nullptr, FinishedCallback finishedCallback = nullptr);
     
-        /// <summary> Iterate through all files and subdirectories specified by path to find needle specified, if  results
+        /// Iterate through all files and subdirectories specified by path to find needle specified, if  results
         /// are found they will be passed via callback method, which will update whether this thread should terminate or not
         /// once it's called.
-        /// </summary> 
         void FindNeedles();
     };
 }
