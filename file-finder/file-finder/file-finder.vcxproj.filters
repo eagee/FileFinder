@@ -27,6 +27,9 @@
     <ClCompile Include="ResultsMonitor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SynchronizedDirectoryIterator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandLineParser.h">
@@ -42,6 +45,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ThreadSafeQueue_p.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SynchronizedDirectoryIterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

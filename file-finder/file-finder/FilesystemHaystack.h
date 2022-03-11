@@ -8,6 +8,8 @@
 
 namespace fileFinder
 {
+    class SynchronizedDirectoryIterator;
+
     /// Allows consumers to specify a, "needle" that can be found in file names in the path specified.
     /// Note: Object is designed to pass matching, "needles" back to consumer via ResultCallback and FinishedCallback to allow for mutli-threading if desired.
     class FilesystemHaystack
@@ -23,12 +25,12 @@ namespace fileFinder
         std::atomic<bool> m_terminate {false};
         ResultCallback m_resultsCallback;
         FinishedCallback m_finishedCallback;
-    
+        std::shared_ptr<SynchronizedDirectoryIterator> m_directoryIterator;
     public:
     
         FilesystemHaystack() = delete;
 
-        FilesystemHaystack(const std::string &path, const std::string &needle, ResultCallback resultscallback = nullptr, FinishedCallback finishedCallback = nullptr);
+        FilesystemHaystack(const std::string &path, const std::string &needle, std::shared_ptr<SynchronizedDirectoryIterator> directoryIterator, ResultCallback resultscallback = nullptr, FinishedCallback finishedCallback = nullptr);
     
         /// Iterate through all files and subdirectories specified by path to find needle specified, if  results
         /// are found they will be passed via callback method, which will update whether this thread should terminate or not

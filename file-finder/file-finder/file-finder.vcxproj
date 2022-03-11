@@ -159,11 +159,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="FilesystemHaystack.cpp" />
     <ClCompile Include="ResultsMonitor.cpp" />
+    <ClCompile Include="SynchronizedDirectoryIterator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandLineParser.h" />
     <ClInclude Include="FilesystemHaystack.h" />
     <ClInclude Include="ResultsMonitor.h" />
+    <ClInclude Include="SynchronizedDirectoryIterator.h" />
     <ClInclude Include="ThreadSafeQueue.h" />
     <ClInclude Include="ThreadSafeQueue_p.h" />
   </ItemGroup>

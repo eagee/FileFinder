@@ -7,6 +7,7 @@
 #include "ThreadSafeQueue.h"
 #include "ResultsMonitor.h"
 #include "FilesystemHaystack.h"
+#include "SynchronizedDirectoryIterator.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -16,7 +17,7 @@ void ResultsMonitor::InitializeHaystacks(const std::string &path, const std::vec
 {
     for (auto needle : needles)
     {
-        auto newHaystack = std::make_unique<FilesystemHaystack>(path, needle,
+        auto newHaystack = std::make_unique<FilesystemHaystack>(path, needle, m_directoryIterator,
             [this](const std::string &match, std::atomic<bool> &terminate)
             {
                 if (match != "")
@@ -34,7 +35,7 @@ void ResultsMonitor::InitializeHaystacks(const std::string &path, const std::vec
     }
 }
 
-ResultsMonitor::ResultsMonitor(const std::string &path, const std::vector<std::string> &needles)
+ResultsMonitor::ResultsMonitor(const std::string &path, const std::vector<std::string> &needles): m_directoryIterator(std::make_shared<SynchronizedDirectoryIterator>(path, needles.size()))
 {
     InitializeHaystacks(path, needles);
 }

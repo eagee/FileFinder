@@ -8,6 +8,7 @@
 namespace fileFinder
 {
     class FilesystemHaystack;
+    class SynchronizedDirectoryIterator;
 
     /// ResultsMonitor monitors filesystem-search for each, "needle" requested by the consumer as well as keyboard input while the searches complete.
     /// Note: This object will dump search results to the console every 5 seconds or when user input is received, ending search when 'q' is pressed.
@@ -22,6 +23,7 @@ namespace fileFinder
         std::vector<std::unique_ptr<std::thread>> m_threads;
         std::unique_ptr<ThreadSafeQueue<std::string>> m_resultsContainer {std::make_unique<ThreadSafeQueue<std::string>>()};
         std::atomic<int> m_totalMatches {0};
+        std::shared_ptr<SynchronizedDirectoryIterator> m_directoryIterator;
 
         /// Initializes haystacks and threads used to searrch them based on the number of needles specified, so that haytacks are ready to be searched on multiple threads
         void InitializeHaystacks(const std::string &path, const std::vector<std::string> &needles);

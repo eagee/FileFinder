@@ -1,3 +1,4 @@
+#include "SynchronizedDirectoryIterator.h"
 #include "FilesystemHaystack.h"
 #include <iostream>
 #include <vector>
@@ -9,8 +10,9 @@ using namespace std;
 using namespace filesystem;
 using namespace fileFinder;
 
-FilesystemHaystack::FilesystemHaystack(const std::string &path, const std::string &needle, ResultCallback resultsCallback /*= nullptr*/, FinishedCallback finishedCallback /*= nullptr*/) :
-    m_path(path), m_needle(needle), m_resultsCallback(resultsCallback), m_finishedCallback(finishedCallback)
+FilesystemHaystack::FilesystemHaystack(const std::string &path, const std::string &needle, std::shared_ptr<SynchronizedDirectoryIterator> directoryIterator, ResultCallback resultsCallback /*= nullptr*/, FinishedCallback finishedCallback /*= nullptr*/) :
+    m_path(path), m_needle(needle), m_directoryIterator(directoryIterator), 
+    m_resultsCallback(resultsCallback), m_finishedCallback(finishedCallback)
 {
     assert(m_resultsCallback != nullptr);
     assert(m_finishedCallback != nullptr);
@@ -18,11 +20,10 @@ FilesystemHaystack::FilesystemHaystack(const std::string &path, const std::strin
 
 void FilesystemHaystack::FindNeedles()
 {
-    auto it = recursive_directory_iterator(m_path);
-    while(it != recursive_directory_iterator())
+    while(!m_directoryIterator->Finished())
     {
-        auto path = it->path().string();
-        auto fileName = it->path().filename().string();
+        auto path = m_directoryIterator->Path();
+        auto fileName = m_directoryIterator->FileName();
         
         // Search the fileName string using boyer_moore algorithm for pattern matching
         auto searchIt = std::search(fileName.begin(), fileName.end(), std::boyer_moore_searcher(m_needle.begin(), m_needle.end()));
@@ -46,9 +47,9 @@ void FilesystemHaystack::FindNeedles()
 
         try
         {
-            ++it;
+            ++*m_directoryIterator;
         }
-        catch (filesystem_error& err)
+        catch (filesystem_error &err)
         {
             // Since our project has a simplifying assumption that we have access to all files and directories, we'll go ahead and end the loop if we run into an access error.
             std::cout << ">>> Error: " << err.what() << " when searching path " << path << std::endl;
