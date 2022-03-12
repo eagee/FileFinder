@@ -44,11 +44,15 @@ The use cases below are used to think through the problem instead of just jumpin
 1. This use case begins when a CLI User calls file-finder from the command line, specifying a directory as the first space delimited argument, and then 1..n string delimited arguments after that.
 2. The application parses the command line arguments into a string representing the folder to be searched, and a list of string patterns (needles) to be matched against existing folders (haystacks).
 3. The application verifies that the folder name specified exists and finds that it does.
-4. The application creates an object that will manage the lifetime of all threads in the application, as well as monitor the search results found for each substring and periodically dump that data to the console (unless a user requests an exit).
-5. The application creates 1..n objects for each substring that will be responsible for searching the specified directory and all subdirectories and triggers a search for each object [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring)
-6. The application waits on user input for 5 seconds, or for all search threads to complete
-7. If the CLIUser requests an exit by pressing, 'q', the application requests that each thread terminates, and cleans up all allocated data
-8. If the CLIUser requests a dump by pressing any key or 5 seconds has elapsed, the application will dump any data received in a callback during [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring) and clean up all dumped data from the container.
+4. The application creates an object that will buffer directory data in a thread safe manner.
+5. The application creates an object that will manage the lifetime of search threads in the application, as well as monitor the search results as buffer data is processed for each substring and periodically dump that data to the console (unless a user requests an exit).
+5. The application creates 1..n objects for each substring that will be responsible for searching buffered directory and subdirectory data given the specified path
+6. The application begins buffering and searching operations
+  6.a. [see: Application progressively buffers filesystem data for multiple consumers](#Application parses-recursive-directory-information-into-buffer).
+  6.b. [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring)]
+7. The application waits on user input for 5 seconds, or for all search threads to complete
+  7.a. If the CLIUser requests an exit by typing, 'quit' and pressing 'Enter', the application requests that each thread terminates, and cleans up all allocated data.
+  7.b. If the CLIUser requests a dump by typing 'dump' and pressing 'Enter' or 5 seconds has elapsed, the application will dump any data received in a callback during [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring) and clean up all dumped data from the container.
 5. This use case ends when any remaining results are dumped line-by-line to the command prompt, all resources are cleaned up, and the program exits.
 
 ##### Alternative Path(s)
@@ -59,17 +63,40 @@ The use cases below are used to think through the problem instead of just jumpin
 
 (1c) This use case ends when the target search folder is not found. An error is returned to the command line, "Error: Search folder specified not found. Sample usage: file-finder...".
 
+#### Application progressively buffers filesystem data for multiple consumers
+
+##### Main Path
+1. This use case begins when the application has verified the user has entered a valid path and substrings and starts to iterate all of the file names in the specified directory recursively.
+2. The application allocates 64 lists of 1024 strings and places them in a thread safe queue for writing, and tracks the total bufffer count as 64.
+3. The application pops the next available list from the queue and recursively iterates through 1024 file names and places them in the buffer.
+4. The application notifies the threads performing search operations [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring) that there is a new read-only buffer for processing.
+5. The application repeats steps 3-4.
+6. This use case ends when all file names have been buffered and moved into a queue for reading and the threads performing search operations in [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring) and the number of empty write buffers has been restored to the total buffer amount (indicating that all processing is complete and that we can clean up).
+
+
+##### Alternative Path(s)
+(3a) This use case ends if there are less than 1024 file names remaining to iterate the application enqueues the buffer in a threads safe queue for reading and notifies the threads performing search operations in [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring) that there is a new buffer for processing.
+
+(3b) The application attempts to pop the next available list from the queue but there are no more lists available
+(3b.1) The application creates a new list of 1024 items, and adds it to the write queue, as well as incrementing the total buffer count by 1.
+
+(5a) When a thread notifies the application that it's finished processing a buffer, the application increments a counter tracking the number of times the list buffer has been processed
+(5a.1) If the number of the buffer has been processed matches the number of threads, the application clears the list buffer and enqueues it back into the thread safe queue for writing to prevent additional unnecessary buffer allocations
+
 #### Application executes search operation for substring
 
 ##### Main Path
-1. This use case begins when the application passes a list of paths and a substring to the search operation thread
-2. The search operation thread recursively obtains a list of files for each subdirectory included in the path
-3. For each set of files in a folder the search operation thread will use std::boyer_moyer to see if it can find the, "needle" in the file name haystack
-4. If a match is found, the search operation thread triggers a callback in the main function to add a list of the found files for that directory
-5. This use case ends when all subdirectories for the specified path have been iterated through and there is no more work to be done, *or* if the parent object indicates it wishes to stop searching, at which time the thread cleans up any data and terminates
+1. This use case begins when the application has notified the threads searching for substrings that a list buffer is ready to process in [see: Application progressively buffers filesystem data for multiple consumers](#Application parses-recursive-directory-information-into-buffer).
+2. The search operation thread iterates over each file name found in the buffer.
+3. For each set of files in the buffer the search operation thread will use std::boyer_moyer to see if it can find the, "needle" in the file name haystack.
+4. If a match is found, the search operation thread triggers a callback in the main function to add a list of the found files for that directory.
+5. Once the search operation completes for this list buffer the thread notifies the buffer object that it's done processing the buffer
+6. This use case ends when all buffers for the specified path have been iterated through and there is no more work to be done, *or* if the parent object indicates it wishes to stop searching, at which time the thread cleans up any data and terminates.
 
 ##### Alternative Path(s)
-(4a) If a match is not found, the search operation thread ignores the item and continues to iterate through the rest of the files
+(2a) If a search operation is already running the application enqueues the buffer in a thread safe queue for later processing once the current buffer has been searched successfully.
+
+(4a) If a match is not found, the search operation thread ignores the item and continues to iterate through the rest of the file names in the buffer.
 
 ### Domain Analysis
 Below is a class diagram based on the nouns and verbs form the use case cases above, which creates a class structure based up the language used.
