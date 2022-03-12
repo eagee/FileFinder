@@ -1,18 +1,21 @@
-#include "SynchronizedDirectoryIterator.h"
-#include "FilesystemHaystack.h"
 #include <iostream>
 #include <vector>
 #include <string>
 #include <filesystem>
 #include <cassert>
+#include "FileNames.h"
+#include "ThreadSafeQueue.h"
+#include "FilesystemHaystack.h"
 
 using namespace std;
 using namespace filesystem;
 using namespace fileFinder;
 
-FilesystemHaystack::FilesystemHaystack(const std::string &path, const std::string &needle, std::shared_ptr<SynchronizedDirectoryIterator> directoryIterator, ResultCallback resultsCallback /*= nullptr*/, FinishedCallback finishedCallback /*= nullptr*/) :
-    m_path(path), m_needle(needle), m_directoryIterator(directoryIterator), 
-    m_resultsCallback(resultsCallback), m_finishedCallback(finishedCallback)
+FilesystemHaystack::FilesystemHaystack(const std::string &path, const std::string &needle, ResultsCallback resultsCallback /*= nullptr*/, FinishedBufferCallback finishedCallback /*= nullptr*/) :
+    m_path(path), 
+    m_needle(needle),
+    m_resultsCallback(resultsCallback),
+    m_finishedCallback(finishedCallback)
 {
     assert(m_resultsCallback != nullptr);
     assert(m_finishedCallback != nullptr);
@@ -20,42 +23,43 @@ FilesystemHaystack::FilesystemHaystack(const std::string &path, const std::strin
 
 void FilesystemHaystack::FindNeedles()
 {
-    while(!m_directoryIterator->Finished())
+    // Loop until m_terminate is set to true in m_resultsCallback.
+    while(!m_terminateSearch)
     {
-        auto path = m_directoryIterator->Path();
-        auto fileName = m_directoryIterator->FileName();
-        
-        // Search the fileName string using boyer_moore algorithm for pattern matching
-        auto searchIt = std::search(fileName.begin(), fileName.end(), std::boyer_moore_searcher(m_needle.begin(), m_needle.end()));
-        
-        // If a match for the needle is found in our fileName then trigger a callback to add the fileName to our container
-        // otherwise pass an empty string to the callback so that we can still see if  the user wishes to terminate
-        if (searchIt != fileName.end())
+        if (m_buffersToProcess->Size() > 0)
         {
-            m_resultsCallback(fileName, std::ref(m_terminate));
-        }
-        else
-        {
-            m_resultsCallback("", std::ref(m_terminate));
-        }
-        
-        // If our parent object has indicated it wants us to terminate the search, we'll terminate hte loop.
-        if (m_terminate == true)
-        {
-            break;
+            auto readOnlyBuffer = m_buffersToProcess->Dequeue();
+            for (auto name : *readOnlyBuffer->Buffer)
+            {
+                // Search the fileName string using boyer_moore algorithm for pattern matching
+                auto searchIt = std::search(name.begin(), name.end(), std::boyer_moore_searcher(m_needle.begin(), m_needle.end()));
+
+                // If a match for the needle is found in our fileName then trigger a callback to add the fileName to our container
+                // otherwise pass an empty string to the callback so that we can still see if the user wishes to terminate
+                if (searchIt != name.end())
+                {
+                    m_resultsCallback(name);
+                }
+                
+                if (m_terminateSearch)
+                {
+                    break;
+                }
+            }
+            m_finishedCallback(readOnlyBuffer);
         }
 
-        try
-        {
-            ++*m_directoryIterator;
-        }
-        catch (filesystem_error &err)
-        {
-            // Since our project has a simplifying assumption that we have access to all files and directories, we'll go ahead and end the loop if we run into an access error.
-            std::cout << ">>> Error: " << err.what() << " when searching path " << path << std::endl;
-            break;
-        }
-        
+        // TODO: REPLACE THIS SLEEP COMMAND WITH A WAIT CONDITION!
+        std::this_thread::sleep_for(1ms);
     }
-    m_finishedCallback(std::this_thread::get_id());
+}
+
+void fileFinder::FilesystemHaystack::EnqueueBufferToProcess(std::shared_ptr<FileNames> buffer)
+{
+    m_buffersToProcess->Enqueue(buffer);
+}
+
+void fileFinder::FilesystemHaystack::Stop()
+{
+    m_terminateSearch.exchange(true);
 }

@@ -159,13 +159,14 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="FilesystemHaystack.cpp" />
     <ClCompile Include="ResultsMonitor.cpp" />
-    <ClCompile Include="SynchronizedDirectoryIterator.cpp" />
+    <ClCompile Include="FileNameBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CommandLineParser.h" />
+    <ClInclude Include="FileNames.h" />
     <ClInclude Include="FilesystemHaystack.h" />
     <ClInclude Include="ResultsMonitor.h" />
-    <ClInclude Include="SynchronizedDirectoryIterator.h" />
+    <ClInclude Include="FileNameBuffer.h" />
     <ClInclude Include="ThreadSafeQueue.h" />
     <ClInclude Include="ThreadSafeQueue_p.h" />
   </ItemGroup>

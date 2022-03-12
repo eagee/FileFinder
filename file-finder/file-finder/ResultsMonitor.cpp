@@ -4,40 +4,72 @@
 #include <future>
 #include <chrono>
 #include <conio.h>
+#include "FileNames.h"
+#include "FileNameBuffer.h"
 #include "ThreadSafeQueue.h"
 #include "ResultsMonitor.h"
 #include "FilesystemHaystack.h"
-#include "SynchronizedDirectoryIterator.h"
 
 using namespace std;
 using namespace std::chrono;
 using namespace fileFinder;
 
-void ResultsMonitor::InitializeHaystacks(const std::string &path, const std::vector<std::string> &needles)
+void ResultsMonitor::InitializeHaystacksAndBuffer(const std::string &path, const std::vector<std::string> &needles)
 {
+    // Set up our FileSystemHaystacks with a thread for each substring(needle) that we want to find in them
     for (auto needle : needles)
     {
-        auto newHaystack = std::make_unique<FilesystemHaystack>(path, needle, m_directoryIterator,
-            [this](const std::string &match, std::atomic<bool> &terminate)
+        auto newHaystack = std::make_unique<FilesystemHaystack>(path, needle, 
+            
+            /// Implements @see FilesystemHaystack::ResultsCallback which will enqueue any needles we've found in the haystack into our results.
+            [this](const std::string &match)
             {
-                if (match != "")
-                {
-                    m_resultsContainer->Enqueue(match);
-                }
-                terminate.exchange(m_termianteSearch);
+                m_resultsContainer->Enqueue(match);
             },
-            [this](const std::thread::id id)
+
+            // Implements @see FilesytemHaystack::FinishedBufferCallback which is triggered each time a haystack finishes processing a buffer.
+            // If the number of times it was processed matches the number of haystacks we're evaluating we can put it back into the
+            // fileNameBuffer object for re-use, and to see if we've processed all of our total file names (in which case we can quit) :)
+            [this](std::shared_ptr<FileNames> buffer)
             {
-                m_completeThreads++;
-            } 
+                std::unique_lock<std::mutex> lock(m_bufferFinishedMutex);
+
+                buffer->ProcessedCount++;
+                //std::cout << " Buffer ID:" << buffer->ID << " processed with count: " << buffer->ProcessedCount << endl;
+
+                if (buffer->ProcessedCount >= m_haystacks.size())
+                {
+                    m_fileNameBuffer->EnqueueProcessedBuffer(buffer);
+                    if (m_fileNameBuffer->AllFileNamesHaveBeenProcessed())
+                    {
+                        Stop();
+                    }
+                }
+            }
         );
+
         m_haystacks.push_back(std::move(newHaystack));
     }
+
+    // Initialize our FileNameBuffer object so that it's set up to search through the filesystem and find all the file names
+    // specified, passing them to each of our haystack objects
+    m_fileNameBuffer = std::make_unique<FileNameBuffer>(path, 
+        // Implements @see FileNameBuffer::BufferReadyCallback, which takes a shared, populated buffer pointer and passes it to each ouf our
+        // haystacks for searching.
+        [this](std::shared_ptr<FileNames> buffer)
+        {
+            for (auto &haystack : m_haystacks)
+            {
+                haystack->EnqueueBufferToProcess(buffer);
+            }
+        }
+    );
+
 }
 
-ResultsMonitor::ResultsMonitor(const std::string &path, const std::vector<std::string> &needles): m_directoryIterator(std::make_shared<SynchronizedDirectoryIterator>(path, needles.size()))
+ResultsMonitor::ResultsMonitor(const std::string &path, const std::vector<std::string> &needles)
 {
-    InitializeHaystacks(path, needles);
+    InitializeHaystacksAndBuffer(path, needles);
 }
 
 void ResultsMonitor::GetKeyboardInput()
@@ -60,16 +92,13 @@ void ResultsMonitor::GetKeyboardInput()
         {
             m_lastKbEntry.exchange(_getch());
         }
-        
-        // Debug output :-)
-        //cout << " kb: " << m_lastKbEntry << " done: " << m_completeThreads << " of: " << m_haystacks.size() << " elapsed: " << elapsed.count() << " of " << timeout.count() << endl;
     }
 }
 
 
 void ResultsMonitor::MonitorSearch()
 {
-    while (m_completeThreads < m_haystacks.size())
+    while (!m_termianteSearch)
     {
         // Process user input until 5 seconds have passed or the user has interacted with the keyboard
         auto kbThread = std::make_unique<thread>(&ResultsMonitor::GetKeyboardInput, this);
@@ -82,7 +111,7 @@ void ResultsMonitor::MonitorSearch()
         {
             if (tolower(m_lastKbEntry) == 'q')
             {
-                StopSearching();
+                Stop();
             }
         }
 
@@ -105,10 +134,14 @@ void ResultsMonitor::Dump()
     }
 }
 
-void ResultsMonitor::StopSearching()
+void ResultsMonitor::Stop()
 {
-    std::cout << ">>> Quit requested, terminiated threads." << endl;
     m_termianteSearch.exchange(true);
+    m_fileNameBuffer->Stop();
+    for (auto &haystack : m_haystacks)
+    {
+        haystack->Stop();
+    }
 }
 
 void ResultsMonitor::SearchFilesystem()
@@ -117,16 +150,25 @@ void ResultsMonitor::SearchFilesystem()
     {
         // Start a dedicated thread to periodically dump our results to the console, and monitor for user input
         auto monitorThread = std::make_unique<thread>(&ResultsMonitor::MonitorSearch, this);
-    
+        
+        // Start a dedicated thread to parse all filesystem file names in the specified path into a buffer
+        auto filesystemThread = std::make_unique<thread>(&FileNameBuffer::PopulateBuffers, m_fileNameBuffer.get());
+
         // Start a dedicated thread to find the requested needles on each of the specified haystacks
         for (auto &haystack : m_haystacks)
         {
             auto newThread = std::make_unique<thread>(&FilesystemHaystack::FindNeedles, haystack.get());
-            m_threads.push_back(std::move(newThread));
+            m_haystackThreads.push_back(std::move(newThread));
         }
-    
-        // Make sure we've joined all of our threads so that this method blocks until we're finished.
-        for (auto &thread : m_threads)
+
+
+        // Make sure we've joined all of our threads in the order that they will potentially finish
+        if (filesystemThread->joinable())
+        {
+            filesystemThread->join();
+        }
+
+        for (auto &thread : m_haystackThreads)
         {
             if (thread->joinable())
             {
