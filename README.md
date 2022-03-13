@@ -30,7 +30,7 @@ This project has been implemented for Windows using Visual Studio 2017 Professio
 ## Use case diagram and requirements
 Below is listed a use case diagram for the project that describes how the software will be used, and links those cases with the requirements of the software (e.g. what you'd list as it's features on a website).
 
-![Use case diagram and requirements](/UCD.png)
+![Use case diagram and requirements](https://greendoorgames.com/UCD.png)
 
 ### Technical Use Cases
 The use cases below are used to think through the problem instead of just jumping right into code, so that runtime behavior is thought through. This exercise acts as a first implementation that can lead to more a robust implementation without the need to refactor code and unit tests on the first iteration.
@@ -67,7 +67,7 @@ The use cases below are used to think through the problem instead of just jumpin
 2. The application allocates 64 lists of 1024 strings and places them in a thread safe queue for writing, and tracks the total bufffer count as 64.
 3. The application pops the next available list from the queue and recursively iterates through 1024 file names and places them in the buffer.
 4. The application notifies the threads performing search operations [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring) that there is a new read-only buffer for processing.
-5. The application repeats steps 3-4.
+5. The application repeats steps 3-4 until all files names have been processed.
 6. This use case ends when all file names have been buffered and moved into a queue for reading and the threads performing search operations in [see: Application executes search operation for substring](#Application-executes-search-operation-for-substring) and the number of empty write buffers has been restored to the total buffer amount (indicating that all processing is complete and that we can clean up).
 
 
@@ -98,7 +98,7 @@ The use cases below are used to think through the problem instead of just jumpin
 ### Domain Analysis
 Below is a class diagram based on the nouns and verbs form the use case cases above, which creates a class structure based up the language used.
 
-![Use case diagram and requriements](/Class.png)
+![Use case diagram and requriements](https://greendoorgames.com/Class.png)
 
 ### Tests cases to written
 - CommandLineParser::IsValid - Test return value in the following scenarios:
