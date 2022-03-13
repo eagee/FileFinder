@@ -27,9 +27,6 @@ This project has been implemented for Windows using Visual Studio 2017 Professio
 ### Sample usage
 `Sample usage: file-finder.exe path <substring1> [<substring2> [<substring3>] ...]`
 
-### Demo
-![File filder example gif](/FileFinderExample.gif)
-
 ## Use case diagram and requirements
 Below is listed a use case diagram for the project that describes how the software will be used, and links those cases with the requirements of the software (e.g. what you'd list as it's features on a website).
 

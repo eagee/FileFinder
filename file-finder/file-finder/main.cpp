@@ -22,20 +22,22 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Since we have users typing 'dump' or 'quit' from the command line, I thought a little exposition made sense...
+    // A little bit of helper text we could dipslay
     cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
     cout << ">>> File Finder will now rescursively search \"" << parser->Path() << "\" for matching files names. " << endl;
     cout << ">>> Results will display every 5 seconds until all searches are complete." << endl;
-    cout << ">>> Press any key to show results so far sooner, or press 'q' to quit." << endl;
-    cout << ">>> Press any key to begin search." << endl;
+    cout << ">>> Type 'dump' and press Enter to show records so far." << endl;
+    cout << ">>> Type 'quit' and press Enter to show records so farand quit." << endl;
     cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+    cout << ">>> Press any key to begin search." << endl;
+    cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl << endl;
     _getch();
-    cout << ">>> Searching..." << endl;
+    cout << ">>> Searching..." << endl << endl;
 
     std::unique_ptr<ResultsMonitor> searchResultsMonitor = make_unique<ResultsMonitor>(parser->Path(), parser->Needles());
     searchResultsMonitor->SearchFilesystem();
 
-    cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+    cout << endl << endl << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
     if (searchResultsMonitor->TerminatedEarly())
     {
         cout << ">>> Search terminated early." << endl;

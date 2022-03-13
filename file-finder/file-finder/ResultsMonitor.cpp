@@ -74,54 +74,80 @@ ResultsMonitor::ResultsMonitor(const std::string &path, const std::vector<std::s
 
 void ResultsMonitor::GetKeyboardInput()
 {
-    bool timeoutExpired = false;
-    system_clock::time_point start = system_clock::now();
-    duration<double> timeout = std::chrono::seconds(5);
-
-    while (!timeoutExpired && !m_lastKbEntry)
+    while (!m_termianteSearch)
     {
-        // Check our duration to see if we've timed out waiting on input.
-        duration<double> elapsed = system_clock::now() - start;
-        if (elapsed >= timeout)
+        string action = "";
+
+        // Request user input using std::async
+        system_clock::time_point fiveSecondTimeout = system_clock::now() + std::chrono::seconds(5);
+        future<string> asyncUserInput = async(launch::async,
+            []()
+            {
+                string userInput;
+                std::getline(std::cin, userInput);
+                return userInput;
+            }
+        );
+
+        future_status status = asyncUserInput.wait_until(fiveSecondTimeout);
+
+        // If we received user input, act on it, (tolower transform should probably be implemented in a utility class or method)
+        if (status == std::future_status::ready)
         {
-            timeoutExpired = true;
+            /// Get our result from user input and transform it to a lower case string.
+            action = asyncUserInput.get();
+            std::for_each(action.begin(), action.end(),
+                [](char &c)
+                {
+                    c = ::tolower(c);
+                }
+            );
+        }
+        else if (status == std::future_status::timeout)
+        {
+            // If the user let the keyboard entry time out, then 5 seconds has passed and we want to, "dump" anyway.
+            action = "dump";
         }
 
-        // Check to see if the keyboard was interacted with and if so assign it to our member variable
-        if (_kbhit())
+        // Check to see if the user entered, "dump" or, "quit" and act on either of those options accordingly.
+        if (action == "quit")
         {
-            m_lastKbEntry.exchange(_getch());
+            m_nextAction.exchange(NEXT_ACTION_QUIT);
+        }
+        else if (action == "dump")
+        {
+            m_nextAction.exchange(NEXT_ACTION_DUMP);
+        }
+        else
+        {
+            m_nextAction.exchange(NEXT_ACTION_NONE);
         }
     }
 }
 
 
-void ResultsMonitor::MonitorSearch()
+void ResultsMonitor::MonitorKeyboardInput()
 {
     while (!m_termianteSearch)
     {
-        // Process user input until 5 seconds have passed or the user has interacted with the keyboard
-        auto kbThread = std::make_unique<thread>(&ResultsMonitor::GetKeyboardInput, this);
-        if (kbThread->joinable())
+        if (m_nextAction == NEXT_ACTION_NONE)
         {
-            kbThread->join();
+            std::this_thread::yield();
         }
-
-        if (m_lastKbEntry)
+        else if (m_nextAction == NEXT_ACTION_QUIT)
         {
-            if (tolower(m_lastKbEntry) == 'q')
-            {
-                Stop();
-            }
+            m_terminatedEarly = true;
+            Stop();
+            m_nextAction.exchange(NEXT_ACTION_NONE);
         }
-
-        ClearLastKeyPressed();
-
-        // Once we've processed input, we can go ahead and dump whatever records are still available.
-        Dump();
+        else if (m_nextAction == NEXT_ACTION_DUMP)
+        {
+            Dump();
+            m_nextAction.exchange(NEXT_ACTION_NONE);
+        }
     }
 
-    // Make sure we've dumped whatever records are still remaining after all of our threads have finished running
+    // Make sure we've dumped whatever records are still remaining after the search has terminated
     Dump();
 }
 
@@ -148,9 +174,12 @@ void ResultsMonitor::SearchFilesystem()
 {
     try
     {
-        // Start a dedicated thread to periodically dump our results to the console, and monitor for user input
-        auto monitorThread = std::make_unique<thread>(&ResultsMonitor::MonitorSearch, this);
-        
+        // Start a dedicated thread to process keyboard input
+        auto inputThread = std::make_unique<thread>(&ResultsMonitor::GetKeyboardInput, this);
+
+        // Start a dedicated thread to respond to keyboard input and display results
+        auto monitorThread = std::make_unique<thread>(&ResultsMonitor::MonitorKeyboardInput, this);
+
         // Start a dedicated thread to parse all filesystem file names in the specified path into a buffer
         auto filesystemThread = std::make_unique<thread>(&FileNameBuffer::PopulateBuffers, m_fileNameBuffer.get());
 
@@ -161,8 +190,11 @@ void ResultsMonitor::SearchFilesystem()
             m_haystackThreads.push_back(std::move(newThread));
         }
 
+        if (monitorThread->joinable())
+        {
+            monitorThread->join();
+        }
 
-        // Make sure we've joined all of our threads in the order that they will potentially finish
         if (filesystemThread->joinable())
         {
             filesystemThread->join();
@@ -175,22 +207,19 @@ void ResultsMonitor::SearchFilesystem()
                 thread->join();
             }
         }
-
-        if (monitorThread->joinable())
+        
+        // Our input thread might be stuck waiting for getline(), if so, we can go ahead and detach it.
+        if (inputThread->joinable())
         {
-            monitorThread->join();
+            inputThread->detach();
         }
+
     }
     catch (const std::exception &ex)
     {
         cout << "Error, thread exited with exception: " << ex.what() << endl;
         exit(1);
     }
-}
-
-void fileFinder::ResultsMonitor::ClearLastKeyPressed()
-{
-    m_lastKbEntry.exchange(0);
 }
 
 const int64_t fileFinder::ResultsMonitor::TotalMatches()

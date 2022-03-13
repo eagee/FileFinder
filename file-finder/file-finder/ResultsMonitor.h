@@ -16,10 +16,14 @@ namespace fileFinder
     {
     
     private:
+        static const int NEXT_ACTION_NONE{ 0 };
+        static const int NEXT_ACTION_DUMP{ 1 };
+        static const int NEXT_ACTION_QUIT{ 2 };
+        std::atomic<int> m_nextAction{ NEXT_ACTION_NONE };
         std::mutex m_bufferFinishedMutex;
+        std::mutex m_inputActionMutex;
         std::atomic<bool> m_termianteSearch {false};
-        //std::atomic<unsigned int> m_completeThreads {0};
-        std::atomic<int> m_lastKbEntry {0};
+        std::string m_lastKbEntry{ "" };
         std::vector<std::unique_ptr<FilesystemHaystack>> m_haystacks;
         std::vector<std::unique_ptr<std::thread>> m_haystackThreads;
         std::unique_ptr<ThreadSafeQueue<std::string>> m_resultsContainer {std::make_unique<ThreadSafeQueue<std::string>>()};
@@ -30,21 +34,18 @@ namespace fileFinder
         /// Initializes FileNameBuffer that will populate FilesytemHaystack objects with file names recursively from the directory specified, as well as 
         /// the haystacks and threads used to search them based on the number of needles specified.
         void InitializeHaystacksAndBuffer(const std::string &path, const std::vector<std::string> &needles);
+        
+        ///  Function to be run as a thread and set m_nextAction based on input received
+        void GetKeyboardInput();
 
-        ///  Function to be run as a thread that will monitor the search result container, process keyboard input, and print results to the console
-        void MonitorSearch();
-
-        ///  Convenience function that will clear out the last key pressed 
-        void ClearLastKeyPressed();
+        ///  Function to be run as a thread that will monitor keyboard input while the search is active, and terminate once it's done.
+        void MonitorKeyboardInput();
 
         ///  Dumps search results to the console 
         void Dump();
 
         ///  Triggers all threads to stop processing their results and terminates the check for keyboard input.
         void Stop();
-
-        ///  Processes keyboard input asynchronously in another thread and sets m_lastKbEntry to a non-null value if a key is hit
-        void GetKeyboardInput();
 
     public:
 
