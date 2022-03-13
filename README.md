@@ -114,7 +114,7 @@ Below is a class diagram based on the nouns and verbs form the use case cases ab
   - Ensure that three command line arguments with a file name instead of path returns error indicating this
   - Ensure that three command line arguments with a directory that does not exist returns error indicating this
 - ThreadSafeQueue::Enqueue/ThreadSafeQueue::Dequeue/ThreadSafeQueue::Size - Test that in a multi-threaded scenario deadlocks are avoided and multiple items are successfully added and removed.
-- FilesystemHaystack::FindNeedles - Use mocked object to a generic file system wrapper based on an interface to send mock test data at runtime to FindNeedlesMethod and test:
+- FilesystemHaystack::FindNeedles -
   - Test that matching callback is triggered 1..n times for matching patterns
   - Test that matching callback is triggered 0 times if no matching pattern is found
   - Test that exit flag in callback triggers cessation of search operation
@@ -125,19 +125,24 @@ Below is a class diagram based on the nouns and verbs form the use case cases ab
   - Test to ensure that when SearchFilesystem was called that appropriate data is output ~every 5 seconds
   - Test to ensure that when SearchFilesystem was called that appropriate data is output sooner than 5 seconds if keyboard input is received
   - Test to ensure that when SearchFilesystem was called that the method terminates when appropriate keyboard input is received
+- FileNameBuffer::PopulateBuffers - Use mocked object to a generic file system wrapper based on an interface to send mock test data at runtime to PopulateBuffers.
+    - Test to ensure the correct number of buffers are generated for a set of test filesystem
+    - Test to ensure that the buffer filled callback is triggered successfully the right number of times
+    - Test to ensure that TotalBuffersCreated expands as expected if total files increases faster than buffers can be processed.
+    - Test to ensure Stop method terminates PopulateBuffers as expected
+    - Test to ensure that AllFileNamesHaveBeenProcessed returns the correct value if all files have been processed in a test callback and EnqueueProcessedBuffer has been called for each of them.
+
 
 ### Things I would like to do if I had more time
 1. I may have failed on the Simplicity evaluation criteria. My idea of simplicity in user mode development means using at least a couple of basic classes to make reading and mocking easier, employing basic principles without adding excessive complexity (e.g. if there were more variability I might been more diligent about SOLID, especially for mocking out interfaces/superclasses). It did occur to me that I should have just used plain old modular C to demonstrate driver-level-friendly simplicity.
-2. I made an assumption to leave out Unicode support for this example to save on time, that would never fly in production.
-3. There's a potential here to use a *lot* of threads for a large set of search patterns, these could be limited to a pool based on the number of cores on the machine.
-4. I want to research whether there's a more efficient algorithm than std::boyer_moyer that would perform better within a single thread (just out of curiosity, are we gaining the benefits we hope for with multithreading?).
-5. Exception handling - I'm not really doing much here! How would I handle hardware/system errors, and what would be the most elegant way to handle thread and access exceptions.
-6. Create a C implementation that behaves comparably with the C++ implementation, and compare.
-8. Abstract directory iteration for mock objects and unit testing that doesn't require system integration.
-9. Look into whether we would see better performance only iterating through the filesystem once instead of on each thread.
-10. Purely for fun (definitely not production), I would like to see if the single threaded solution could gather a threshold of file names and run all comparisons at once on a GPU for better performance (I've done similar lookups with malware signatures in the past - this would not be used as a viable example, just something I would do for laughs)
-11. ResultsMonitor may violate SRP, hardware input/output should be abstracted
-12. Support for translations of some kind might be beneficial for a wider target demographic.
+2. There's a potential here to use a *lot* of threads for a large set of search patterns, these could be limited to a pool based on the number of cores on the machine.
+3. I want to research whether there's a more efficient algorithm than std::boyer_moyer that would perform better within a single thread (just out of curiosity, are we gaining the benefits we hope for with multithreading?).
+4. Exception handling - I'm not really enough here! How would I handle hardware/system errors, and what would be the most elegant way to handle thread and access exceptions.
+5. Create a C implementation that behaves comparably with the C++ implementation, and compare.
+6. Abstract directory iteration for mock objects and unit testing that doesn't require system integration.
+7. Purely for fun (definitely not production), I would like to see if the single threaded solution could gather a threshold of file names and run all comparisons at once on a GPU for better performance (I've done similar lookups with malware signatures in the past - this would not be used as a viable example, just something I would do for laughs)
+8. ResultsMonitor may violate SRP, hardware input/output should be abstracted
+9. Support for translations of some kind might be beneficial for a wider target demographic.
 
 ## Methodology
 ### Purpose

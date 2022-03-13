@@ -6,7 +6,17 @@ namespace fileFinder {
     void ThreadSafeQueue<T>::Enqueue(T t)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        m_queue.push(t);
+        try
+        {
+            m_queue.push(t);
+        }
+        catch (const std::bad_alloc &ex)
+        {
+            std::cout << " Error bad allocation caught in " << __FILE__ << " at line " << __LINE__ << std::endl;
+            std::cout << " Exception: " << ex.what() << std::endl;
+            std::terminate();
+        }
+        
         m_condition.notify_one();
     }
 

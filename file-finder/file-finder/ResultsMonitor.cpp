@@ -47,8 +47,17 @@ void ResultsMonitor::InitializeHaystacksAndBuffer(const std::string &path, const
                 }
             }
         );
-
-        m_haystacks.push_back(std::move(newHaystack));
+        
+        try 
+        {
+            m_haystacks.push_back(std::move(newHaystack));
+        }
+        catch (const std::bad_alloc &ex)
+        {
+            std::cout << " Error bad allocation caught in " << __FILE__ << " at line " << __LINE__ << endl;
+            std::cout << " Exception: " << ex.what() << endl;
+            std::terminate();
+        }
     }
 
     // Initialize our FileNameBuffer object so that it's set up to search through the filesystem and find all the file names
@@ -187,6 +196,7 @@ void ResultsMonitor::SearchFilesystem()
         for (auto &haystack : m_haystacks)
         {
             auto newThread = std::make_unique<thread>(&FilesystemHaystack::FindNeedles, haystack.get());
+            
             m_haystackThreads.push_back(std::move(newThread));
         }
 

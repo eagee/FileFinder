@@ -31,15 +31,26 @@ void FilesystemHaystack::FindNeedles()
             auto readOnlyBuffer = m_buffersToProcess->Dequeue();
             for (auto name : *readOnlyBuffer->Buffer)
             {
-                // Search the fileName string using boyer_moore algorithm for pattern matching
-                auto searchIt = std::search(name.begin(), name.end(), std::boyer_moore_searcher(m_needle.begin(), m_needle.end()));
-
-                // If a match for the needle is found in our fileName then trigger a callback to add the fileName to our container
-                // otherwise pass an empty string to the callback so that we can still see if the user wishes to terminate
-                if (searchIt != name.end())
+                try 
                 {
-                    m_resultsCallback(name);
+                    // Search the fileName string using boyer_moore algorithm for pattern matching
+                    auto searchIt = std::search(name.begin(), name.end(), std::boyer_moore_searcher(m_needle.begin(), m_needle.end()));
+                    
+                    // If a match for the needle is found in our fileName then trigger a callback to add the fileName to our container
+                    // otherwise pass an empty string to the callback so that we can still see if the user wishes to terminate
+                    if (searchIt != name.end())
+                    {
+                        m_resultsCallback(name);
+                    }
                 }
+                catch (const std::bad_alloc &ex)
+                {
+                    std::cout << " Error bad allocation caught in " << __FILE__ << " at line " << __LINE__ << endl;
+                    std::cout << " Exception: " << ex.what() << endl;
+                    std::terminate();
+                }
+
+                
                 
                 if (m_terminateSearch)
                 {

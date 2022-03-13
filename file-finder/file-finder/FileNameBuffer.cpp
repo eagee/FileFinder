@@ -41,7 +41,17 @@ void fileFinder::FileNameBuffer::PopulateBuffers()
 
         // Populate the current buffer until we've got enough file names to pass it back to the parent object so that it can be
         // processed, and then handle dequeuing our next buffer
-        currentBuffer->Buffer->push_back(fileName);
+        try 
+        {
+            currentBuffer->Buffer->push_back(fileName);
+        }
+        catch (const std::bad_alloc &ex)
+        {
+            std::cout << " Error bad allocation caught in " << __FILE__ << " at line " << __LINE__ << endl;
+            std::cout << " Exception: " << ex.what() << endl;
+            std::terminate();
+        }
+
         if (currentBuffer->Buffer->size() >= FileNames::MAX_BUFFER_SIZE)
         {
             m_bufferReadyCallback(currentBuffer);

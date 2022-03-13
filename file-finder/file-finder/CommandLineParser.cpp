@@ -37,7 +37,16 @@ void CommandLineParser::ParseCommandLine(int argc, char *argv[])
 
         for (int ix = 2; ix < argc; ix++)
         {
-            m_needles.push_back(argv[ix]);
+            try
+            {
+                m_needles.push_back(argv[ix]);
+            }
+            catch (const std::bad_alloc &ex)
+            {
+                std::cout << " Error bad allocation caught in " << __FILE__ << " at line " << __LINE__ << endl;
+                std::cout << " Exception: " << ex.what() << endl;
+                std::terminate();
+            }
         }
 
         m_isValid = true;

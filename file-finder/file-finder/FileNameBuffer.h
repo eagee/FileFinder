@@ -56,7 +56,7 @@ namespace fileFinder
         /// Will trigger BufferReadyCallback passed into the ctor when a new buffer is available for processing.
         void PopulateBuffers();
 
-        /// Calling stop will cause the PopulateBuffers method to termiante early.
+        /// Calling stop will cause the PopulateBuffers method to terminate early.
         void Stop();
 
         /// Allows a previously used file name buffer to be re-used to prevent constantly allocating more space for file names as they're processed (assuming the app isn't IO bound)
