@@ -143,6 +143,8 @@ Below is a class diagram based on the nouns and verbs form the use case cases ab
 7. Purely for fun (definitely not production), I would like to see if the single threaded solution could gather a threshold of file names and run all comparisons at once on a GPU for better performance (I've done similar lookups with malware signatures in the past - this would not be used as a viable example, just something I would do for laughs)
 8. ResultsMonitor may violate SRP, hardware input/output should be abstracted
 9. Support for translations of some kind might be beneficial for a wider target demographic.
+10. In my initial version FilesystemHaystack iterated through the filesystem itself, but since directory iteration is IO bound the functionality that iterates over the filesystem was moved to FileNameBuffer. This class should renamed to something more generic (e.g. Haystack).
+11. FileNameBuffer doesn't bound how much buffer memory it can allocate, while this is unlikely to be problematic on a modern system it is not an ideal solution (generally on my test system no new buffers are needed, so I left this for now since this is an exercise)
 
 ## Methodology
 ### Purpose

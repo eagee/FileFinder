@@ -13,14 +13,14 @@ using namespace std;
 using namespace fileFinder;
 
 
-void ShowIntroMessage(CommandLineParser &parser)
+void ShowIntroMessage(const CommandLineParser &parser)
 {
     // A little bit of helper text we could display
     cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
     cout << ">>> File Finder will now rescursively search \"" << parser.Path() << "\" for matching files names. " << endl;
     cout << ">>> Results will display every 5-10 seconds until all searches are complete." << endl;
     cout << ">>> Type 'dump' and press Enter to show records so far." << endl;
-    cout << ">>> Type 'quit' and press Enter to show records so farand quit." << endl;
+    cout << ">>> Type 'quit' and press Enter to show records so far and quit." << endl;
     cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
     cout << ">>> Press any key to begin search." << endl;
     cout << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl << endl;

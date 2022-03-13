@@ -16,7 +16,7 @@ namespace fileFinder {
             std::cout << " Exception: " << ex.what() << std::endl;
             std::terminate();
         }
-        
+
         m_condition.notify_one();
     }
 

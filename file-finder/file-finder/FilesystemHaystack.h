@@ -28,6 +28,7 @@ namespace fileFinder
         ResultsCallback m_resultsCallback;
         FinishedBufferCallback m_finishedCallback;
         std::unique_ptr<ThreadSafeQueue<std::shared_ptr<FileNames>>> m_buffersToProcess{std::make_unique<ThreadSafeQueue<std::shared_ptr<FileNames>>>()};
+
     public:
     
         FilesystemHaystack() = delete;

@@ -50,8 +50,6 @@ void FilesystemHaystack::FindNeedles()
                     std::terminate();
                 }
 
-                
-                
                 if (m_terminateSearch)
                 {
                     break;
@@ -60,8 +58,8 @@ void FilesystemHaystack::FindNeedles()
             m_finishedCallback(readOnlyBuffer);
         }
 
-        // TODO: REPLACE THIS SLEEP COMMAND WITH A WAIT CONDITION!
-        std::this_thread::sleep_for(1ms);
+        // TODO: We could probably use a wait condition here...
+        std::this_thread::yield();
     }
 }
 

@@ -141,7 +141,7 @@ void ResultsMonitor::MonitorKeyboardInput()
     {
         if (m_nextAction == NEXT_ACTION_NONE)
         {
-            std::this_thread::yield();
+            std::this_thread::sleep_for(10ms);
         }
         else if (m_nextAction == NEXT_ACTION_QUIT)
         {

@@ -40,7 +40,7 @@ namespace fileFinder
 
         /// Accepts a path to generate buffers from by iterating the path recursively and pulling out all of the file names contained in the directory.
         /// Allows consuming object to specify code that will be triggered in a callback whenever a new buffer of file names is ready for processing.
-        FileNameBuffer(const std::string &path, BufferReadyCallback bufferReadyCallback = nullptr);
+        explicit FileNameBuffer(const std::string &path, BufferReadyCallback bufferReadyCallback = nullptr);
 
         /// Copying this object is not part of our use case, so we'll set it up as non-copyable
         FileNameBuffer& operator=(const FileNameBuffer&) = delete;
@@ -48,9 +48,6 @@ namespace fileFinder
         /// Initializes the default number of buffers set by INITIAL_BUFFER_COUNT to provide enough initial buffer space to continue producing
         /// while the search threads consume the buffers we populate (though buffers can grow if we are not IO bound)
         void InitializeBuffers();
-
-        /// Indicates the total number of buffers that were created during the lifetime of FileNameBuffer
-        int TotalBuffersCreated();
 
         /// Method that can be called in a separate thread to populate buffers with file names found recursively in the path specified in the constructor.
         /// Will trigger BufferReadyCallback passed into the ctor when a new buffer is available for processing.

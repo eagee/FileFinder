@@ -26,11 +26,6 @@ void fileFinder::FileNameBuffer::InitializeBuffers()
     }
 }
 
-int fileFinder::FileNameBuffer::TotalBuffersCreated()
-{
-    return m_totalBuffersCreated;
-}
-
 void fileFinder::FileNameBuffer::PopulateBuffers()
 {
     auto currentBuffer = m_availableBuffers->Dequeue();
