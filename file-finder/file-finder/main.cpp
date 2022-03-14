@@ -30,7 +30,7 @@ void ShowIntroMessage(const CommandLineParser &parser)
 
 void ShowClosingMessage(ResultsMonitor &searchResultsMonitor)
 {
-    cout << endl << endl << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+    cout << endl << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
     if (searchResultsMonitor.TerminatedEarly())
     {
         cout << ">>> Search terminated early." << endl;
@@ -58,8 +58,10 @@ int main(int argc, char *argv[])
     std::unique_ptr<ResultsMonitor> searchResultsMonitor = make_unique<ResultsMonitor>(parser->Path(), parser->Needles());
     searchResultsMonitor->SearchFilesystem();
 
-    ShowClosingMessage(*searchResultsMonitor);
-
+    if(!searchResultsMonitor->TerminatedEarly())
+    {
+        ShowClosingMessage(*searchResultsMonitor);
+    }
 
     // I hope this is what you meant when you asked me to manually clean up memory and not rely on dtors :)
     parser.reset(nullptr);

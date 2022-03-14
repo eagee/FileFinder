@@ -157,7 +157,10 @@ void ResultsMonitor::MonitorKeyboardInput()
     }
 
     // Make sure we've dumped whatever records are still remaining after the search has terminated
-    Dump();
+    if(!m_terminatedEarly)
+    {
+        Dump();
+    }
 }
 
 void ResultsMonitor::Dump()
